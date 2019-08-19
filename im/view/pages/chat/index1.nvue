@@ -1,0 +1,337 @@
+<template>
+	
+	<view class="page">
+			
+		<view class="list" 
+		v-for="(item,key) of list_data"
+		@tap="goMessage(item.list_id,key,item.no_reader_num)"
+		:key="key">
+			
+			<view class="photo">
+				<image class="photo_img" 
+				:src="photo(item.photo_path+'')" 
+				:lazy-load="true"
+				/>
+			</view>
+			
+			<view class="main">
+				
+				<view class="name">
+					<text class="name_text">{{item.show_name}}</text>
+				</view>
+				
+				<view class="msg">
+					<text class="msg_text">{{item.last_msg}}</text>
+				</view>
+				
+			</view>
+			
+			<view class="foot">
+				<text class="time">{{timestampFormat(item.time)}}</text>
+			</view>
+			
+			<view class="tips" v-if="item.no_reader_num">
+				<text class="tips_text">{{item.no_reader_num}}</text>
+			</view>
+			
+		</view>
+		
+		<view :class="['action_main']" v-if="action_menu" @tap="actionMain">
+			<view class="action_base" >
+				
+				<view class="action_item" @tap="goAction(0)">
+					<view class="uni-media-list-logo action_icon">
+						<image :src="'../../static/theme/default/chat/chat.png'" :lazy-load="true" style="width:40rpx;height:40rpx;"/>
+					</view>
+					<view><text class="action_item_text">发起群聊</text></view>
+					
+				</view>
+				
+				<view class="action_item" @tap="goAction(1)">
+					<view class="uni-media-list-logo action_icon">
+						<image :src="'../../static/theme/default/chat/add_friend.png'" :lazy-load="true" style="width:40rpx;height:40rpx;"/>
+					</view>
+					<view><text class="action_item_text">添加好友</text></view>
+				</view>
+				
+				<view class="action_item" @tap="goScanCode">
+					<view class="uni-media-list-logo action_icon">
+						<image :src="'../../static/theme/default/chat/scan_code.png'" :lazy-load="true" style="width:40rpx;height:40rpx;"/>
+					</view>
+					<view><text class="action_item_text">扫一扫</text></view>
+				</view>
+				
+				<view class="action_item" v-if="0">
+					<view class="uni-media-list-logo action_icon" v-if="0">
+						<image :src="'../../static/theme/default/chat/in_out.png'" :lazy-load="true"/>
+					</view>
+					<view><text class="action_item_text">收付款</text></view>
+				</view>
+				
+			</view>
+		</view>
+		
+	</view>
+	
+</template>
+
+<script>
+	
+	import _get from '../../common/_get';
+	import _action from '../../common/_action';
+	import _hook from '../../common/_hook';
+	import _data from '../../common/_data';
+	
+	export default {
+		data() {
+			return {
+				list_data: [],
+				list_index: '',
+				action_menu: false,
+			}
+		},
+		computed: {
+			
+		},
+		onShow(){
+			_hook.routeTabBarHook();
+			let _this = this,
+			data = _data.data('chat_list');
+			
+			/** 监听最新数据 */
+			uni.$on('data_chat_list',function(data){
+				_this.list_data = data;
+			});
+			
+			/** 加载本地缓存数据，让页面秒速渲染出来 */
+			if(data){
+				this.list_data = data;
+			}
+			else {
+				_get.getChatList();
+			}
+		},
+		onLoad(){
+			let _this = this;
+			uni.onNavigationBarButtonTap((e) => {
+				_this.action_menu = !_this.action_menu;
+			});
+		},
+		onHide(){
+			//uni.$off('data_chat_list');
+		},
+		methods: {
+			actionMain(){
+				this.action_menu = false;
+			},
+			timestampFormat(time){
+				return _action.timestampFormat(time);
+			},
+			photo(path){
+				return _data.staticPhoto() + path;
+			},
+			goAction(type){
+				let path = '';
+				switch (type){
+					case 0:
+						path = '../friend/index_list?list_id=0';
+						break;
+					case 1:
+						path = '../friend/add';
+						break;
+					default:
+						return;
+						break;
+				}
+				uni.navigateTo({
+					url: path,
+					animationType: 'slide-in-bottom',
+				});
+			},
+			goMessage(list_id,key,no_reader_num){				
+				if(no_reader_num) {
+					_get.getChatData({
+						send_data: {
+							list_id: list_id,
+							time: 0,
+					is_up: 1,
+						},
+						is_action_data: 1,
+					});
+					this.list_data[key].no_reader_num = 0;
+					_data.localData('chat_list',this.list_data);
+					_action.updataNoReader(list_id);
+					_action.setStatusTips();
+				}
+				_data.localData('message_list_id',list_id);
+				uni.setStorageSync('message_list_id', list_id);
+				uni.navigateTo({
+					url: './message?list_id=' + list_id,
+				});
+			},
+			goScanCode(){
+				let _this = this;
+				uni.scanCode({
+					success: function (res) {
+						if(new RegExp(_data.data('http_url')).test(res.result) && res.result.match(/\/([a-z]+)\/(\d+)$/) && RegExp.$1 && RegExp.$2){
+							let path;
+							switch (RegExp.$1){
+								case 'add':
+									uni.navigateTo({
+										url: '../details/index?user_id=' + RegExp.$2 + '&is_type=3',
+									});
+									break;
+								default:
+									uni.showToast({
+										title: '无效的二维码',
+										duration: 2000
+									});
+									break;
+							}
+						} else {
+							uni.showToast({
+								title: '无效的二维码',
+								duration: 2000
+							});
+						}
+					},
+					fail(){
+						return;
+						uni.showToast({
+							title: '扫码失败',
+							duration: 2000,
+						});
+					},
+				});
+			},
+		},
+		watch: {
+			
+		},
+	}
+</script>
+
+<style>
+	
+	.list {
+		padding: 20rpx;
+		border-style: solid;
+		border-bottom-color: #c8c7cc;
+		border-bottom-width: 1px;
+		position: relative;
+	}
+	
+	.photo {
+		
+	}
+	
+	.photo_img {
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 10rpx;
+	}
+	
+	.main {
+		position: absolute;
+		left: 135rpx;
+	}
+	
+	.name {
+		width: 400rpx;
+	}
+	
+	.name_text {
+		font-size: 30rpx;
+		height: 60rpx;
+		line-height: 60rpx;
+		color: #3C3E49;
+		text-overflow: ellipsis;
+		lines:1;
+	}
+	
+	.msg {
+		width: 600rpx;
+	}
+	
+	.msg_text {
+		font-size: 25rpx;
+		color: #8f8f94;
+		height: 40rpx;
+		line-height: 40rpx;
+		text-overflow: ellipsis;
+		lines:1;
+	}
+	
+	.foot {
+		position: absolute;
+		right: 20rpx;
+	}
+	
+	.time {
+		font-size: 21rpx;
+		color: #8f8f94;
+	}
+	
+	.tips {
+		background-color: #f43530;
+		border-radius: 50%;
+		position: absolute;
+		top: 6rpx;
+		left: 106rpx;
+		padding-left: 10rpx;
+		padding-right: 10rpx;
+	}
+	
+	.tips_text {
+		color: #FFFFFF;
+		text-align: center;
+		font-size: 22rpx;
+		line-height: 30rpx;
+	}
+	
+	.action_main {
+	   position: fixed;
+	   top: 0;
+	   width: 750rpx;
+	   height: 1080rpx;
+	   z-index: 100;
+	}
+	
+	.action_base {
+	   position: absolute;
+	   right: 15rpx;
+	   width: 300rpx;
+	   background-color: #36363d;
+	   border-radius: 10upx;
+	}
+	
+	.action_item {
+	   color: #e5e5e5;
+	   height: 90rpx;
+	   flex-direction: row;
+	   justify-content: flex-start;
+	}
+	.uni-media-list-logo {
+	
+		height: 90rpx;
+		margin-top: 25rpx;
+		margin-right: 20rpx;
+		margin-left: 30rpx;
+	}
+	
+	.action_icon {
+	   width: 45rpx;
+	   height: 45rpx;
+	}
+	
+	.action_item_text {
+	   padding-top: 30rpx;
+	   margin-left: 10rpx;
+	   font-size: 30rpx;
+	   color: #FFFFFF;	   
+	  
+	   text-align: center;
+	}
+	
+	
+</style>

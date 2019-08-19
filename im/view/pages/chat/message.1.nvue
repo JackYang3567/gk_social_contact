@@ -1,0 +1,962 @@
+<template>
+	<view class="wrapper">
+	<view class="chat-list pages">
+		<view v-if="list.length">
+			<scroll-view :scroll-top="scrollTop" scroll-y="true" class="scroll-Y">
+				<view  v-for="(row,index) of list" :key="index" :id="'msg'+row.msg.id"> 
+				  <block v-if="row.type=='user'" >
+					  <view class="my" v-if="row.msg.userinfo.uid==myuid">
+						  
+				     <!-- 别人发出的消息 -->
+					    <view class="chat-time-container">
+							<view class="A"></view>
+							<view class="B"><text class="text-info text-time" >{{row.msg.time}}</text></view>
+							<view class="C"></view>
+						</view>
+						
+						<!-- 文字消息 -->
+						<view v-if="row.msg.type=='text'" class="chat-container left">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+						    <view class="chat-box  ">								
+							    <view v-if="row.msg.type=='text'" class="chat-msg text-line" style="{'height': getStringLen(row.msg.content.text)? 90:'' +'rpx'}">			
+								   
+								   <text class="text-info">点击页面发送数据{{num}} {{row.msg.content.text}}</text>
+							    </view>								 
+							</view>							
+						</view>
+						
+						<!-- 图片消息 -->
+						<view v-if="row.msg.type=='img'" class="chat-container left" @tap="showPic(row.msg)">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+							<view class="chat-image"  style="margin-left: 10rpx;">
+								<image resize="contain" :src="row.msg.content.url" :style="{'width': row.msg.content.w+'rpx','height': row.msg.content.h+'rpx'}" class="img" />
+							</view>
+						</view> 
+						
+						 <!-- 语言消息 -->
+						<view v-if="row.msg.type=='voice'" class="chat-container  left" @tap="playVoice(row.msg)" :class="playMsgid == row.msg.id?'play':''">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+							<view class=" other-voice voice-icon left-radius" style="margin-left: 10rpx;">
+							   <image src="/static/theme/default/voice-right.png" style="width: 36rpx;height:36rpx;" />
+							 </view>									
+							<view class="other-voice voice-length right-radius">
+								  <text class="length"> {{row.msg.content.length}}</text>
+							</view>
+						</view>   <!-- 语言消息 -->
+						
+						<!-- 红包 -->
+						<!--
+						<view v-if="row.msg.type=='redEnvelope'" class="chat-container left" @tap="openRedEnvelope(row.msg,index)">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+							<image style="width: 250rpx; height: 313rpx;"  src="/static/img/red-envelope.png"></image> 
+							<view class="tis">
+								<!-- 点击开红包 --><!--
+							</view>
+							<view class="blessing">
+								{{row.msg.content.blessing}}
+							</view>
+						</view> 
+						-->
+					</view>
+					<!-- 我发出的消息 -->
+					<view class="other" v-if="row.msg.userinfo.uid!=myuid">
+						 <view class="chat-time-container ">
+							<view class="A"></view>
+							<view class="B"><text class="text-info text-time" >{{row.msg.time}}</text></view>
+							<view class="C"></view>
+					 	 </view>
+						
+						 <!-- 文字消息 -->
+						<view v-if="row.msg.type=='text'" class="chat-container right">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+						    <view class="chat-box  ">							 
+							  <view v-if="row.msg.type=='text'" class="chat-msg chat-me-msg text-line">
+							     <text class="text-info">{{row.msg.content.text}}</text>
+							  </view>
+						    </view>							
+						</view>						
+						
+						  <!-- 图片消息 -->
+						<view v-if="row.msg.type=='img'" class="chat-container right" @tap="showPic(row.msg)">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+							<view class="chat-image" style="margin-right: 10rpx;">
+								<image resize="contain" :src="row.msg.content.url" :style="{'width': row.msg.content.w+'rpx','height': row.msg.content.h+'rpx'}" class="img" />
+							</view>							
+						</view> 
+						
+						 <!-- 语言消息 -->
+						<view v-if="row.msg.type=='voice'" class="chat-container right" @tap="playVoice(row.msg)" :class="playMsgid == row.msg.id?'play':''">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+							<view class="my-voice  voice-icon right-radius" style="margin-right: 10rpx;">
+							   <image src="/static/theme/default/voice.png" style="width: 36rpx;height:36rpx;" />
+							 </view>									
+							<view class="my-voice  voice-length left-radius">
+								  <text class="length"> {{row.msg.content.length}}</text>
+							</view>
+						</view>   <!-- 语言消息 -->
+						
+						<!-- 红包 -->
+						<!--
+						<view v-if="row.msg.type=='redEnvelope'" class="chat-container right " @tap="openRedEnvelope(row.msg,index)">
+							<avatar :src="row.msg.userinfo.face"></avatar>
+						   <image style="width: 250rpx; height: 313rpx;"  src="/static/img/red-envelope.png"></image>
+							<view class="tis">
+								<!-- 点击开红包 -->
+									<!--						
+							</view>
+							<view class="blessing">
+								{{row.msg.content.blessing}}
+							</view>
+						</view> 
+						-->
+					</view>
+					</block>
+				</view> 
+			</scroll-view>
+		</view>
+		
+		
+		<!-- 抽屉栏 -->
+		 <view class="popup-box popup-layer" v-if="popupLayerShow" 
+		      :class="popupLayerClass" @touchmove.stop.prevent="discard"> 
+		 <!-- 表情 --> 
+			<swiper class="emoji-box"  v-if="hideEmoji" indicator-dots="true" duration="150">
+				<swiper-item  class="emoji-page" v-for="(page,pid) in emojiList" :key="pid" >					
+					<view class="emoji-icon"  v-for="(em,eid) in page" :key="eid" @tap="addEmoji(em)" >					
+						<image :src="'/static/img/emoji/'+em.url" style="width: 50rpx;height: 50rpx;"></image>					
+					</view>
+				</swiper-item>
+			</swiper>
+			
+			<!-- 更多功能 相册-拍照-红包  funcList-->
+			<swiper class="emoji-box"  v-esle-if="hideMore" indicator-dots="true" duration="40">
+				
+				<swiper-item class="emoji-page" v-for="(page,pid) in funcList" :key="pid" >
+					<view  class="box-A box-icon-big-A"  v-for="(em,eid) in page" :key="eid" @tap="chooseImage">
+						<view class="box-B box-icon-big-B">
+							<image :src="'/static/theme/default/'+em.url" style="width: 50rpx;height: 50rpx;" />
+						</view>
+						<view class="text-box"><text class="text-L">{{em.title}}</text></view>
+					</view>
+					
+				</swiper-item>
+			</swiper>
+			
+		</view>
+		
+		<!-- 底部输入 -->
+		<view class="operations box" :style="{'bottom': bottom +'rpx'}">
+				<!--<view class=" model"><text class="btn-font">+</text></view>-->
+				
+				
+				<view class="btn-icon-position">
+					<!-- 键盘输入 -->
+					<view  v-if="isVoice" @tap="keyboard_voice">
+						<image src="/static/theme/default/keyboard.png" style="width: 62rpx;height: 62rpx;" />
+					</view>
+					
+					<!-- 语音录入 -->
+					<view  v-else  @tap="switchVoice" >
+						<image src="/static/theme/default/voice_circle.png" style="width: 62rpx;height: 62rpx;" />	
+					</view>
+				</view>
+				
+				<!-- 录音输入 -->
+				<view  v-if="isVoice" class=" inputbox" :style="{'width': input_width+'rpx'}">
+					<view  class="inputbox" ><text  class="input-voice">{{voiceTis}}</text></view>
+				</view>
+				<!-- 文字输入 -->
+				<view  v-else class=" inputbox" :style="{'width': input_width+'rpx'}">
+					<input class="input-msg" type="text" ref="messagesInput"  
+							auto-height="true" @focus="textareaFocus" 
+							v-model="chat.textMsg"  placeholder="" />
+				</view>
+				<!-- <view class=" emjoicon"><text class="btn-font">+</text></view> -->
+				
+				<!-- 添加表情按钮 -->
+				<view  v-if="is_keyboard" class="btn-icon-position" @click="go_keyboard">
+					<image src="/static/theme/default/keyboard.png" style="width: 62rpx;height: 62rpx;" />
+				</view>
+                <view v-else class="btn-icon-position" @tap="chooseEmoji">
+					<image src="/static/theme/default/emoji.png" style="width: 62rpx;height: 62rpx;" />
+				</view>	
+				
+				<view class="send btn-icon-position"> 
+				    <!-- 发送文字 -->
+					<view class="btn"  @tap="sendText" v-if="is_textareaFocus">						
+						<text class="btn-title" >发送</text>
+					</view> 
+					 <!-- 相册 拍摄 -->
+					<view  v-else @tap="showMore">
+					   <image src="/static/theme/default/add.png" style="width: 62rpx;height: 62rpx;" />
+					</view>	
+				</view>
+			</view>
+		</view>
+	</view>
+	
+	
+</template>
+
+<script>
+
+	import Avatar from './Avatar'
+	
+	const globalEvent = weex.requireModule('globalEvent');
+
+	export default {
+		    components:{Avatar},
+			data() {
+				return {
+					  num: "0",
+					// 底部 相机 表情 
+					  bottom:-2,
+					  hideEmoji:false,  //隐藏表情 列表
+					  hideMore:false,   //隐藏相册 拍摄 列表
+					  popupLayerShow: false,
+					  chat:{textMsg: ""},
+					  input_width: 480,
+					  is_keyboard:false,
+					  //文字消息
+					 
+					  is_textareaFocus:false,
+					  myuid:0,
+					  isVoice:false,
+					  voiceTis:'按住 说话',
+					  recordTis:"手指上滑 取消发送",
+					  list: [
+						 	{type:"system",msg:{id:0,type:"text",content:{text:"欢迎进入HM-chat聊天室"}}},
+						 	{type:"user",msg:{id:1,type:"text",time:"12:56",userinfo:{uid:0,username:"大黑哥",face:"http://shejiao123bb.767717.com/static/photo/user/26/90.jpg?_=0.25159282457642607"},content:{text:"为什么温度会相差那么大？"}}},
+						 	{type:"user",msg:{id:2,type:"text",time:"12:57",userinfo:{uid:1,username:"售后客服008",face:"http://shejiao123bb.767717.com/static/photo//group_photo/4a2e329a104c8b3d15a743f508be8ce1/90.jpg?_=0.25159282457642607"},content:{text:"这个是有偏差的，两个温度相差十几二十度是很正常的，如果相差五十度，那即是质量问题了。"}}},
+						 	{type:"user",msg:{id:3,type:"voice",time:"12:59",userinfo:{uid:1,username:"售后客服008",face:"http://shejiao123bb.767717.com/static/photo/user/68/90.jpg?_=0.25159282457642607"},content:{url:"/static/voice/1.mp3",length:"00:06"}}},
+						 	{type:"user",msg:{id:4,type:"voice",time:"13:05",userinfo:{uid:0,username:"大黑哥",face:"http://shejiao123bb.767717.com/static/photo/user/68/90.jpg?_=0.25159282457642607"},content:{url:"/static/voice/2.mp3",length:"00:06"}}},
+						 	{type:"user",msg:{id:5,type:"img",time:"13:05",userinfo:{uid:0,username:"大黑哥",face:"http://shejiao123bb.767717.com/static/photo/user/68/90.jpg?_=0.25159282457642607"},content:{url:"/static/img/p10.jpg",w:200,h:200}}},
+						 	{type:"user",msg:{id:6,type:"img",time:"12:59",userinfo:{uid:1,username:"售后客服008",face:"http://shejiao123bb.767717.com/static/photo/user/68/90.jpg?_=0.25159282457642607"},content:{url:"/static/img/q.jpg",w:1920,h:1080}}},
+						 	{type:"system",msg:{id:7,type:"text",content:{text:"欢迎进入HM-chat聊天室"}}},
+						 	
+						 	{type:"system",msg:{id:9,type:"redEnvelope",content:{text:"售后客服008领取了你的红包"}}},
+						 	{type:"user",msg:{id:10,type:"redEnvelope",time:"12:56",userinfo:{uid:0,username:"大黑哥",face:"http://shejiao123bb.767717.com/static/photo/user/26/90.jpg?_=0.25159282457642607"},content:{blessing:"恭喜发财，大吉大利，万事如意",rid:0,isReceived:false}}},
+						 	{type:"user",msg:{id:11,type:"redEnvelope",time:"12:56",userinfo:{uid:1,username:"售后客服008",face:"http://shejiao123bb.767717.com/static/photo/user/26/90.jpg?_=0.25159282457642607"},content:{blessing:"恭喜发财",rid:1,isReceived:false}}},
+						 
+					  ],
+					  emojiList:[
+					  	[{"url":"100.gif",alt:"[微笑]"},{"url":"101.gif",alt:"[伤心]"},{"url":"102.gif",alt:"[美女]"},{"url":"103.gif",alt:"[发呆]"},{"url":"104.gif",alt:"[墨镜]"},{"url":"105.gif",alt:"[哭]"},{"url":"106.gif",alt:"[羞]"},{"url":"107.gif",alt:"[哑]"},{"url":"108.gif",alt:"[睡]"},{"url":"109.gif",alt:"[哭]"},{"url":"110.gif",alt:"[囧]"},{"url":"111.gif",alt:"[怒]"},{"url":"112.gif",alt:"[调皮]"},{"url":"113.gif",alt:"[笑]"},{"url":"114.gif",alt:"[惊讶]"},{"url":"115.gif",alt:"[难过]"},{"url":"116.gif",alt:"[酷]"},{"url":"117.gif",alt:"[汗]"},{"url":"118.gif",alt:"[抓狂]"},{"url":"119.gif",alt:"[吐]"},{"url":"120.gif",alt:"[笑]"},{"url":"121.gif",alt:"[快乐]"},{"url":"122.gif",alt:"[奇]"},{"url":"123.gif",alt:"[傲]"}],
+					  	[{"url":"124.gif",alt:"[饿]"},{"url":"125.gif",alt:"[累]"},{"url":"126.gif",alt:"[吓]"},{"url":"127.gif",alt:"[汗]"},{"url":"128.gif",alt:"[高兴]"},{"url":"129.gif",alt:"[闲]"},{"url":"130.gif",alt:"[努力]"},{"url":"131.gif",alt:"[骂]"},{"url":"132.gif",alt:"[疑问]"},{"url":"133.gif",alt:"[秘密]"},{"url":"134.gif",alt:"[乱]"},{"url":"135.gif",alt:"[疯]"},{"url":"136.gif",alt:"[哀]"},{"url":"137.gif",alt:"[鬼]"},{"url":"138.gif",alt:"[打击]"},{"url":"139.gif",alt:"[bye]"},{"url":"140.gif",alt:"[汗]"},{"url":"141.gif",alt:"[抠]"},{"url":"142.gif",alt:"[鼓掌]"},{"url":"143.gif",alt:"[糟糕]"},{"url":"144.gif",alt:"[恶搞]"},{"url":"145.gif",alt:"[什么]"},{"url":"146.gif",alt:"[什么]"},{"url":"147.gif",alt:"[累]"}],
+					  	[{"url":"148.gif",alt:"[看]"},{"url":"149.gif",alt:"[难过]"},{"url":"150.gif",alt:"[难过]"},{"url":"151.gif",alt:"[坏]"},{"url":"152.gif",alt:"[亲]"},{"url":"153.gif",alt:"[吓]"},{"url":"154.gif",alt:"[可怜]"},{"url":"155.gif",alt:"[刀]"},{"url":"156.gif",alt:"[水果]"},{"url":"157.gif",alt:"[酒]"},{"url":"158.gif",alt:"[篮球]"},{"url":"159.gif",alt:"[乒乓]"},{"url":"160.gif",alt:"[咖啡]"},{"url":"161.gif",alt:"[美食]"},{"url":"162.gif",alt:"[动物]"},{"url":"163.gif",alt:"[鲜花]"},{"url":"164.gif",alt:"[枯]"},{"url":"165.gif",alt:"[唇]"},{"url":"166.gif",alt:"[爱]"},{"url":"167.gif",alt:"[分手]"},{"url":"168.gif",alt:"[生日]"},{"url":"169.gif",alt:"[电]"},{"url":"170.gif",alt:"[炸弹]"},{"url":"171.gif",alt:"[刀子]"}],
+					  	[{"url":"172.gif",alt:"[足球]"},{"url":"173.gif",alt:"[瓢虫]"},{"url":"174.gif",alt:"[翔]"},{"url":"175.gif",alt:"[月亮]"},{"url":"176.gif",alt:"[太阳]"},{"url":"177.gif",alt:"[礼物]"},{"url":"178.gif",alt:"[抱抱]"},{"url":"179.gif",alt:"[拇指]"},{"url":"180.gif",alt:"[贬低]"},{"url":"181.gif",alt:"[握手]"},{"url":"182.gif",alt:"[剪刀手]"},{"url":"183.gif",alt:"[抱拳]"},{"url":"184.gif",alt:"[勾引]"},{"url":"185.gif",alt:"[拳头]"},{"url":"186.gif",alt:"[小拇指]"},{"url":"187.gif",alt:"[拇指八]"},{"url":"188.gif",alt:"[食指]"},{"url":"189.gif",alt:"[ok]"},{"url":"190.gif",alt:"[情侣]"},{"url":"191.gif",alt:"[爱心]"},{"url":"192.gif",alt:"[蹦哒]"},{"url":"193.gif",alt:"[颤抖]"},{"url":"194.gif",alt:"[怄气]"},{"url":"195.gif",alt:"[跳舞]"}],
+					  	[{"url":"196.gif",alt:"[发呆]"},{"url":"197.gif",alt:"[背着]"},{"url":"198.gif",alt:"[伸手]"},{"url":"199.gif",alt:"[耍帅]"},{"url":"200.png",alt:"[微笑]"},{"url":"201.png",alt:"[生病]"},{"url":"202.png",alt:"[哭泣]"},{"url":"203.png",alt:"[吐舌]"},{"url":"204.png",alt:"[迷糊]"},{"url":"205.png",alt:"[瞪眼]"},{"url":"206.png",alt:"[恐怖]"},{"url":"207.png",alt:"[忧愁]"},{"url":"208.png",alt:"[眨眉]"},{"url":"209.png",alt:"[闭眼]"},{"url":"210.png",alt:"[鄙视]"},{"url":"211.png",alt:"[阴暗]"},{"url":"212.png",alt:"[小鬼]"},{"url":"213.png",alt:"[礼物]"},{"url":"214.png",alt:"[拜佛]"},{"url":"215.png",alt:"[力量]"},{"url":"216.png",alt:"[金钱]"},{"url":"217.png",alt:"[蛋糕]"},{"url":"218.png",alt:"[彩带]"},{"url":"219.png",alt:"[礼物]"},]				
+					  ],
+					   funcList:[
+					  	[{"url":"Image.png",title:"相册",alt:"[微笑]"},{"url":"camera.png",title:"拍摄",alt:"[拍摄]"},{"url":"RedEnvelopes.png",title:"红包",alt:"[红包]"},{"url":"video-call.png",title:"视频通话",alt:"[视频通话]"},{"url":"position.png",title:"位置",alt:"[位置]"},{"url":"transfer-accounts.png",title:"转账",alt:"[转账]"},{"url":"voice-input.png",title:"语音输入",alt:"[语音输入]"},{"url":"my-collection.png",title:"我的收藏",alt:"[我的收藏]"}],
+					  	[{"url":"business-card.png",title:"名片",alt:"[名片]"},{"url":"file.png",title:"文件",alt:"[文件]"}]				
+					  ],
+					  fontNameSearch: "\ue64e",
+				}
+		
+			},
+			onLoad(option) {
+				
+				setTimeout(() => {
+					uni.getStorage({
+						key:'list_id',
+						success: (res) => {
+							console.log("===获得上个页面传递的数据" + res.data)
+						}
+					})
+				},200)
+			},
+			computed(){
+				this.popupLayerShow =  this.hideEmoji ? true: (this.hideMore?true:false);
+				this.bottom=520;
+			},
+			created() {
+				
+			},
+			methods:{
+				// 计算文本信息是否长到绕行
+				getStringLen(Str){   
+					let i,len,code;   
+					if(Str==null || Str == "") return 0;   
+					len = Str.length;   
+					for(i =  0;i < Str.length;i++)     
+					{     
+					  code = Str.charCodeAt(i);   
+					   if(code  > 255) {len ++;}   
+					}   
+					return (len>18)?true:false;   
+				},
+				// 接受消息(筛选处理)
+				screenMsg(msg){
+					//从长连接处转发给这个方法，进行筛选处理
+					if(msg.type=='system'){
+						// 系统消息
+						switch (msg.msg.type){
+							case 'text':
+								this.addSystemTextMsg(msg);
+								break;
+							case 'redEnvelope':
+								this.addSystemRedEnvelopeMsg(msg);
+								break;
+						}
+					}else if(msg.type=='user'){
+						// 用户消息
+						switch (msg.msg.type){
+							case 'text':
+								this.addTextMsg(msg);
+								break;
+							case 'voice':
+								this.addVoiceMsg(msg);
+								break;
+							case 'img':
+								this.addImgMsg(msg);
+								break;
+							case 'redEnvelope':
+								this.addRedEnvelopeMsg(msg);
+								break;
+						}
+						console.log('用户消息');
+						//非自己的消息震动
+						if(msg.msg.userinfo.uid!=this.myuid){
+							console.log('振动');
+							uni.vibrateLong();
+						}
+					}
+					this.$nextTick(function() {
+						// 滚动到底
+						this.scrollToView = 'msg'+msg.msg.id
+					});
+				},
+				//更多功能(点击+弹出) 
+				showMore(){
+					this.hideEmoji = false;  //隐藏表情 列表
+					this.hideMore = true;
+					//this.popupLayerShow = this.hideMore ? true : false;
+					//this.popupLayerShow = true;
+					this.is_keyboard = false;
+					this.is_textareaFocus = false;
+					//this.bottom = 520;					
+					this.input_width = 480;
+					this.isVoice = false;
+					//this.hideEmoji = true;
+					if(this.hideMore){
+						//this.hideMore = false;
+						this.openDrawer();
+					}else{
+						this.hideDrawer();
+					}
+				   
+				},
+				// 切换语音/文字输入
+				switchVoice(){
+					this.input_width = 480;
+					this.is_textareaFocus = false;
+					this.hideDrawer();
+					this.isVoice = true;
+					this.is_keyboard = false;
+					
+				},
+				keyboard_voice(){
+					this.isVoice = false;
+					
+				},
+				// 选择表情
+				chooseEmoji(){
+					this.hideEmoji = true;  //隐藏表情 列表
+					this.hideMore = false;
+					//this.popupLayerShow =  this.hideEmoji ? true: false;
+					this.is_keyboard = true;					
+					//this.$refs.messagesInput.focus();
+					
+					if(this.hideEmoji){
+						//this.hideEmoji = false;
+						this.openDrawer();
+					}else{
+						this.hideDrawer();
+					}
+				},
+				go_keyboard(){
+					this.isVoice = false;
+					this.$refs.messagesInput.focus();
+					this.is_keyboard = false;
+					this.hideEmoji = false;  //隐藏表情 列表
+					this.hideDrawer();
+				},
+				//添加表情
+				addEmoji(em){
+					
+					this.chat.textMsg+=em.alt;
+				},
+				// 打开抽屉
+				openDrawer(){
+					this.bottom = 520;
+					//this.popupLayerClass = true;
+					this.popupLayerShow = true;
+				},
+				// 隐藏抽屉
+				hideDrawer(){
+					//this.popupLayerShow =  this.hideEmoji ? true: false;
+					this.popupLayerShow =  false;
+					this.hideMore = false;
+					this.hideEmoji = false;
+					this.bottom = -2;
+					//this.popupLayerClass = false;
+					setTimeout(()=>{
+						//this.hideMore = true;
+						//this.hideEmoji = true;
+					},150);
+				},
+				
+				
+				// 发送文字消息
+				sendText(){
+				console.log("this.$refs.messages========",this.$refs.messages.value);
+					console.log("11111========",this.chat.textMsg );
+					this.hideDrawer();//隐藏抽屉
+					if(!this.chat.textMsg){
+						return;
+					}
+					//let content = this.replaceEmoji(this.chat.textMsg);
+					let content = this.chat.textMsg ;//this.replaceEmoji(this.chat.textMsg);
+					let msg = {text:content};
+					console.log("$$$$====",this.chat.textMsg);
+					//this.sendMsg(msg,'text');
+					this.chat.textMsg = '';//清空输入框
+				},
+				
+				// 发送消息
+				sendMsg(content,type){
+					//实际应用中，此处应该提交长连接，模板仅做本地处理。
+					var nowDate = new Date();
+					let lastid = this.msgList[this.msgList.length-1].msg.id;
+					lastid++;
+					let msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:content}}
+					// 发送消息
+					this.screenMsg(msg);
+					// 定时器模拟对方回复,三秒
+					setTimeout(()=>{
+						lastid = this.msgList[this.msgList.length-1].msg.id;
+						lastid++;
+						msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:content}}
+						// 本地模拟发送消息
+						this.screenMsg(msg);
+					},3000)
+				},
+				
+				
+				
+				//获取焦点，如果不是选表情ing,则关闭抽屉
+				textareaFocus(){
+					this.input_width = 400;
+					this.is_textareaFocus = true;
+					
+					//this.hideEmoji = false;  //隐藏表情 列表
+					//this.hideMore = false;   //隐藏表情 列表
+					this.popupLayerShow = false; //隐藏表情 列表
+					//this.bottom = -2;
+					console.log('this.is_textareaFocus',this.is_textareaFocus);
+					//if(this.popupLayerClass=='true' && this.hideMore == false){
+						this.hideDrawer();
+					//}
+				},
+				
+				// 添加文字消息到列表
+				addTextMsg(msg){
+					this.msgList.push(msg);
+				},
+				// 添加语音消息到列表
+				addVoiceMsg(msg){
+					this.msgList.push(msg);
+				},
+				// 添加图片消息到列表
+				addImgMsg(msg){
+					msg.msg.content = this.setPicSize(msg.msg.content);
+					this.msgImgList.push(msg.msg.content.url);
+					this.msgList.push(msg);
+				},
+				addRedEnvelopeMsg(msg){
+					this.msgList.push(msg);
+				},
+				// 添加系统文字消息到列表
+				addSystemTextMsg(msg){
+					this.msgList.push(msg);
+				},
+				// 添加系统红包消息到列表
+				addSystemRedEnvelopeMsg(msg){
+					this.msgList.push(msg);
+				},
+				 scrollToBottom () {
+				  if (!this.$refs.messages) {
+				    return
+				  }
+				  const lastMessage = this.$refs.messages[this.$refs.messages.length - 1]
+				  setTimeout(() => {
+				    dom.scrollToElement(lastMessage, {
+				      offset: 0,
+				      animated: true
+				    })
+				  }, 0)
+				},
+			}
+	
+	}
+</script>
+
+<style>
+
+/*
+@font-face {font-family: "iconfont";
+  src: url('http://at.alicdn.com/t/iconfont.eot?t=1564049771516'); 
+  src: url('http://at.alicdn.com/t/iconfont.eot?t=1564049771516#iefix') format('embedded-opentype'), 
+  url('data:application/x-font-woff2;charset=utf-8;base64,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') format('woff2'),
+  url('http://at.alicdn.com/t/iconfont.woff?t=1564049771516') format('woff'),
+  url('http://at.alicdn.com/t/iconfont.ttf?t=1564049771516') format('truetype'), 
+  url('http://at.alicdn.com/t/iconfont.svg?t=1564049771516#iconfont') format('svg'); 
+}
+*/
+@font-face {font-family: "iconfont";
+  src: url('http://at.alicdn.com/t/iconfont.eot?t=1564049771516'); /* IE9 */
+  src: url('http://at.alicdn.com/t/iconfont.eot?t=1564049771516#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('http://at.alicdn.com/t/iconfont.woff?t=1564049771516') format('woff'),
+  url('http://at.alicdn.com/t/iconfont.ttf?t=1564049771516') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+ */
+  url('http://at.alicdn.com/t/iconfont.svg?t=1564049771516#iconfont') format('svg'); /* iOS 4.1- */
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  
+}
+
+		
+	
+  
+ .wrapper {
+    justify-content: space-between;
+	 background-color: #F3F3F3;
+  }
+  .chat-list {   
+    background-color: #F3F3F3;
+  }
+  .pages{
+		
+		width: 730rpx;
+		margin-top: 0rpx;
+		margin-right: 10rpx;
+		margin-bottom: 10rpx;
+		margin-left: 10rpx;
+	}
+  .chat-time-container{
+		
+		 flex-direction: row;
+	}
+	.A { 
+		 width: 330rpx;
+		}
+	.B {
+		align-items: center;		
+		margin-top: 30rpx;
+		margin-bottom: 30rpx;
+		background-color: #DEDEDE;
+		padding: 10rpx;
+		border-radius: 10rpx;
+	  }
+	.C {
+		width:260rpx;
+		
+	  }
+	  .D {
+		width:100rpx;
+		background-color:red;
+		}
+	
+	.chat-container{
+		   
+	        flex-direction: row;
+			justify-content: flex-start;
+		
+			margin: 5rpx;
+		}
+		
+	.chat-avatar {
+			background-color:#FFFFFF;
+			width: 90rpx;
+			height:90rpx;
+		}	 
+	.chat-box {
+			width: 552rpx;
+			margin-left: 10rpx;
+			align-items:flex-start; 
+			
+		}
+	.chat-msg {
+			background-color: #FFFFFF;
+			width: 542rpx;
+			
+			margin-left: 3rpx;
+			margin-right: 5rpx;
+			padding-left: 15rpx;
+			padding-right: 15rpx;
+			padding-top: 15rpx;
+			padding-bottom: 15rpx;
+			border-radius: 15rpx;
+			align-items:stretch;    
+	
+		}
+	 .chat-me-msg{
+		background-color: #b2e281; 
+	 }
+	.chat-time {
+			width: 160rpx;
+			height: 100rpx;
+			margin-left: 10rpx;
+	   }
+	.text-line {
+	  align-items:flex-start;
+	  
+	}	
+	.text-info{
+		align-items:flex-start;  
+		color: #000000;
+		font-size: 28rpx;
+		padding: 1rpx;
+		
+	}
+	.text-name{
+		color: #000000;
+		font-size: 28rpx;
+	}
+	.text-time{
+		color: #FFFFFF;
+		font-size: 28rpx;
+	}
+	.length{
+		
+		
+		font-size: 28rpx;
+	}
+	.chat-image{
+		 width: 542rpx;
+         height: 280rpx;
+		border-radius: 15rpx;
+	}
+	
+	
+/* ----------- */
+
+.popup-layer{
+	 position: fixed;
+	 z-index: 20;
+	 bottom:-2rpx;
+	 flex:2;
+}
+.popup-box{
+	width: 750rpx;
+	height: 522rpx;
+	flex-direction: row;
+	background-color: #f2f2f2;
+}
+
+.iconfont {
+	
+    font-family: iconfont;
+}
+.icon-like {
+    width: 34rpx;
+    height: 34rpx;
+    font-size: 28rpx;
+}
+ .operations {
+	 width: 750rpx;
+	 height: 120rpx;
+	 padding-top: 0rpx;
+	 padding-bottom: 0rpx;
+	 padding-left: 1rpx;
+	 padding-right: 1rpx;
+	 background-color: #f2f2f2;
+    
+	 flex-direction: row;
+	 position: fixed;
+	 z-index: 20;
+	 bottom:520rpx;
+     flex:2;	
+	
+	
+  }
+  .emoji-box {
+	width: 735rpx;
+	height: 522rpx;
+	margin-left: 15rpx;
+	background-color: #f2f2f2;
+}
+
+.emoji-page{
+	padding-top:50rpx;
+	padding-bottom: 50rpx;			
+	flex-direction: row; flex-wrap:wrap;
+	background-color: #f2f2f2;
+}
+.emoji-icon{
+	padding-left: 20rpx;
+	padding-right: 15rpx;
+	padding-top:30rpx;
+	padding-bottom: 30rpx;	
+    width: 90rpx;
+    height:110rpx;
+}
+  .box {
+    background-color: #EEEEEE;
+	height:120rpx;
+	padding-top:5rpx;
+	border-style: solid;
+	border-top-width: 1rpx;
+	border-top-color: #BEBEBE;
+  }
+  
+  .box-A {
+	justify-content: center;
+	align-items: center;
+	margin-left: 35rpx;
+	margin-right: 20rpx;
+	margin-top: 10rpx;
+	margin-bottom: 10rpx;
+}
+.box-B{
+    background-color: #ffffff;
+    border-radius: 20rpx; 
+	padding-left: 30rpx;
+	padding-right: 30rpx;
+	padding-top: 30rpx;
+	padding-bottom: 30rpx;
+}
+.box-icon-big-A{
+	height: 180rpx;
+	width: 120rpx;
+	
+}
+.box-icon-big-B{
+	height: 100rpx;
+	
+}
+.text-box {
+	height: 60rpx;
+	
+	width: 120rpx; 
+	font-size: 16rpx; 
+	align-items: center;
+}
+
+.text-L{
+	padding-top:15rpx;
+	padding-bottom: 15rpx;
+	font-size: 20rpx;
+	color:#6D6D72;
+}
+
+
+  .btn-font{
+	  font-size: 28rpx;
+	    
+  }
+  .model {
+	align-items:center; 
+    background-color: #FFFFFF;
+    width: 72rpx;
+    height:72rpx;
+	margin-top: 20rpx;
+	margin-left: 10rpx;
+	margin-right: 10rpx;
+	padding-top:10rpx;
+	padding-bottom: 10rpx;
+    border-radius: 36rpx;
+	border-style: solid;
+	border-width: 1rpx;
+	border-color: #000000;
+  }
+  .inputbox {
+    background-color:#FFFFFF;
+    width: 400rpx;
+	height: 80rpx;
+	margin-top: 15rpx;
+	border-radius: 80rpx;
+  }
+  
+  .input-msg{
+	  font-size: 28rpx;
+	  color: #000000;
+	  margin-top: 10rpx;
+	  margin-left: 10rpx;
+	  margin-right: 10rpx;
+	  padding-left: 10px;
+	  padding-right: 20px;
+	  
+	  padding-top:10rpx;
+  }
+  .input-voice{ 
+	  font-size: 28rpx;
+	  color: #000000;
+	   margin-top: 10rpx;
+	  margin-left: 10rpx;
+	  margin-right: 10rpx;
+	  padding-left: 110px;
+	  padding-right: 20px;
+	  }
+  .emjoicon {
+   align-items:center; 
+   background-color: #FFFFFF;
+   width: 72rpx;
+   height:72rpx;
+   margin-top: 20rpx;
+   margin-left: 15rpx;
+   margin-right: 15rpx;
+   padding-top:10rpx;
+   padding-bottom: 10rpx;
+   border-radius: 36rpx;
+   border-style: solid;
+   border-width: 1rpx;
+   border-color: #000000;
+  }	
+
+/*
+.send {
+    align-items:center; 
+    background-color: #FFFFFF;
+    width: 36rpx;
+    height:36rpx;
+    margin-top: 15rpx;
+    margin-left: 5rpx;
+    margin-right: 5rpx;
+    padding-top:5rpx;
+    padding-bottom: 10rpx;
+    border-radius: 18rpx;
+    border-style: solid;
+    border-width: 1rpx;
+    border-color: #000000;
+  }	
+*/
+.right{
+	/* justify-content:flex-end; */
+	flex-direction:row-reverse;
+}
+.left{
+	/* justify-content:flex-start; */
+	flex-direction:row;
+	}
+.send{
+		/* #ifdef H5 */
+		margin-left: 20rpx;
+		/* #endif */
+		
+		align-items: center;
+	}
+ .btn{
+ 	width: 150rpx;
+ 	height: 70rpx;
+ 
+ 	justify-content: center;
+ 	align-items: center;
+ 	background-color:forestgreen;
+ 	border-radius: 10rpx;
+	margin-top: 0rpx;
+	padding-right: 10rpx;
+	padding-left: 10rpx;
+ }
+ .btn-title{
+	
+	 color:#FFFFFF;
+	 font-size: 28rpx;
+ }
+ .btn-icon-position{
+	 margin-top: 25rpx;
+	 margin-left:10rpx;
+	 margin-right:10rpx;
+ }
+ 
+ 
+ .my-voice{
+  height: 90rpx;
+  background-color: #b2e281; 
+  
+ }
+ .other-voice{
+	height: 90rpx;
+	background-color: #ffffff; 
+ }
+ .voice-icon{
+   width: 56rpx; 
+   height: 90rpx;
+   padding-top: 25rpx;
+   padding-right: 10rpx;
+   padding-left: 10rpx;
+   
+  
+ }
+ .voice-length{
+   height: 90rpx;
+  
+   padding-top: 28rpx;	 
+   padding-right: 15rpx;
+   padding-left: 15rpx;
+ }
+ .left-radius
+ {
+ 	  border-top-left-radius: 15rpx;
+ 	  border-bottom-left-radius: 15rpx;
+	  height: 90rpx;
+	  
+ }
+ .right-radius
+ {
+	 
+	  border-top-right-radius: 15rpx;
+	  border-bottom-right-radius: 15rpx;
+	  height: 90rpx;
+	  
+	  
+ }
+ 
+ .icon:after
+ {
+	border-style: solid;
+ }
+ .img{
+  	background-color: transparent;
+  	padding:0;
+  	overflow: hidden;
+  	width: 500rpx;
+  	height:616rpx;
+ }
+ 
+ .red-envelope{
+ 	background-color: transparent;
+ 	padding:0;
+ 	overflow: hidden;
+ 	justify-content: center;
+ 	align-items: flex-start;
+ }
+
+.tis{
+	/*position: absolute; 
+	top: 6%;*/
+	
+	font-size: 12rpx;
+	color: #9c1712;
+}
+.blessing{
+	/*
+	  position: absolute;
+	  bottom: 14%;
+	*/
+
+	justify-content:space-between;
+	z-index:30;
+	top:-160rpx;
+	text-align: center;
+	/*background-image:url(../../static/img/red-envelope.png); */
+	color: #e9b874;
+	width: 250rpx; 
+	height:160rpx;
+	font-size: 12rpx;
+	
+}
+</style>

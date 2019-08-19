@@ -1,0 +1,147 @@
+{
+    "name" : "丢丢",
+    "appid" : "__UNI__B50CC7F",
+    "description" : "相逢即是缘",
+    "versionName" : "2.0.10",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "networkTimeout" : {
+        "request" : 6000,
+        "connectSocket" : 6000,
+        "uploadFile" : 60000,
+        "downloadFile" : 6000
+    },
+    "app-plus" : {
+        /* 是否启用`自定义组件模式`，为true表示新的`自定义组件模式` ，否则为`template模板模式` */
+        "usingComponents" : true,
+        /* 5+App特有相关 */
+        "modules" : {
+            "VideoPlayer" : {},
+            "Speech" : {}
+        },
+        /* 模块配置 */
+        "distribute" : {
+            /* 应用发布信息 */
+            "android" : {
+                /* android打包配置 */
+                "permissions" : [
+                    "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CALL_PHONE\"/>",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+                    "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+                    "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\"/>",
+                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_CONTACTS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_CONTACTS\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
+                ]
+            },
+            "ios" : {},
+            /* ios打包配置 */
+            "sdkConfigs" : {
+                "speech" : {
+                    "ifly" : {}
+                }
+            },
+            "icons" : {
+                "ios" : {
+                    "appstore" : "D:/works/vmsworks/gk_social_contact/im/app/icon.png",
+                    "ipad" : {
+                        "app" : "unpackage/res/icons/76x76.png",
+                        "app@2x" : "unpackage/res/icons/152x152.png",
+                        "notification" : "unpackage/res/icons/20x20.png",
+                        "notification@2x" : "unpackage/res/icons/40x40.png",
+                        "proapp@2x" : "unpackage/res/icons/167x167.png",
+                        "settings" : "unpackage/res/icons/29x29.png",
+                        "settings@2x" : "unpackage/res/icons/58x58.png",
+                        "spotlight" : "unpackage/res/icons/40x40.png",
+                        "spotlight@2x" : "unpackage/res/icons/80x80.png"
+                    },
+                    "iphone" : {
+                        "app@2x" : "unpackage/res/icons/120x120.png",
+                        "app@3x" : "unpackage/res/icons/180x180.png",
+                        "notification@2x" : "unpackage/res/icons/40x40.png",
+                        "notification@3x" : "unpackage/res/icons/60x60.png",
+                        "settings@2x" : "unpackage/res/icons/58x58.png",
+                        "settings@3x" : "unpackage/res/icons/87x87.png",
+                        "spotlight@2x" : "unpackage/res/icons/80x80.png",
+                        "spotlight@3x" : "unpackage/res/icons/120x120.png"
+                    }
+                },
+                "android" : {
+                    "hdpi" : "D:/works/vmsworks/gk_social_contact/im/app/icon.png",
+                    "ldpi" : "unpackage/res/icons/48x48.png",
+                    "mdpi" : "unpackage/res/icons/48x48.png",
+                    "xhdpi" : "D:/works/vmsworks/gk_social_contact/im/app/icon.png",
+                    "xxhdpi" : "D:/works/vmsworks/gk_social_contact/im/app/icon.png",
+                    "xxxhdpi" : "D:/works/vmsworks/gk_social_contact/im/app/icon.png"
+                }
+            },
+            "splashscreen" : {
+                "ios" : {
+                    "iphone" : {
+                        "portrait-896h@3x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape-896h@3x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "portrait-896h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape-896h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "iphonex" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "iphonexl" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina55" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina55l" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina47" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina47l" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina40" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina40l" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "retina35" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png"
+                    },
+                    "ipad" : {
+                        "portrait-1366h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape-1366h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "portrait-1194h@2" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape-1194h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "portrait-1112h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape-1112h@2x" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "portrait-retina7" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape-retina7" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "portrait7" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png",
+                        "landscape7" : "C:/Users/49757/Desktop/app/微信图片_20190708193516.png"
+                    }
+                },
+                "android" : {
+                    "xxhdpi" : "D:/works/vmsworks/gk_social_contact/im/app/start.png",
+                    "hdpi" : "D:/works/vmsworks/gk_social_contact/im/app/start.png"
+                }
+            }
+        }
+    },
+    /* SDK配置 */
+    "quickapp" : {},
+    /* 快应用特有相关 */
+    "mp-weixin" : {
+        /* 小程序特有相关 */
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : true
+        }
+    },
+    "h5" : {
+        "devServer" : {
+            "https" : false
+        }
+    }
+}

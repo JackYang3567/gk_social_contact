@@ -1,0 +1,11 @@
+.idea
+composer.lock
+*.log
+http/runtime
+uploads
+socket/.vscode
+socket/composer.lock
+view/node_modules
+view/unpackage
+~*.*
+dev_explain/~*.*

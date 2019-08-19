@@ -1,0 +1,10 @@
+{
+    "name"  : "im",
+    "keywords": ["distributed","communication"],
+    "homepage": "http://www.workerman.net",
+    "license" : "im",
+    "require": {
+        "workerman/gateway-worker": ">=3.0.0",
+        "topthink/think-orm": "^1.2"
+    }
+}

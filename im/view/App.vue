@@ -95,19 +95,21 @@
 			
 		},
 		onShow() {
-			if(!_data.localData('token')){
-				return;
-			}
+			let _this = this;
 			setTimeout(() => {
+			   /** 这里如果是H5平台清空语音缓存列表 */
+			   // #ifdef H5
+					_data.localData('voice_data',{});
+			   // #endif
 			   /**
 				* 每次app启动都加载最新的会话列表数据，只要是最新的会话列表数据，会话界面数据也会是最新的
 				* 这里延时100ms,不然会全局变量没有加载完成，会报错。
 				*/
+				if(!_data.localData('token')){
+					return;
+				}				
 				_get.getChatList();
-			},100);
-			
-			let _this = this;
-			
+			},300);
 			/**
 			 * @param {Object} res
 			 * 监听网络变化
@@ -121,7 +123,6 @@
 				uni.closeSocket();
 				_this.$socketSend();
 				_get.getChatList();
-				
 				if(_data.localData('message_list_id')){
 					_get.getChatData({
 						send_data: {

@@ -418,6 +418,8 @@
 		onShow(){
 			_hook.routeSonHook();
 			
+			this.AUDIO.obeyMuteSwitch = false;
+			
 			/** 先移除监听事件（避免重复触发消息） */
 			uni.$off('data_chat_data_unshift');
 			uni.$off('data_chat_data_push');
@@ -845,7 +847,17 @@
 			
 			// 发送消息
 			sendMsg(content,type){
-				uni.showLoading();
+				
+				// #ifdef H5
+				uni.showLoading({
+				    title: '发送中...'
+				});
+				// #endif
+				
+				// #ifdef APP-PLUS
+				let wgtWaiting = plus.nativeUI.showWaiting("发送中...");
+				// #endif
+				
 				let _this = this,
 				sendMsg = content;
 				
@@ -872,7 +884,20 @@
 								success(data){
 									sendMsg.url = data.save_name;
 									callback();
-								}
+								},
+								onProgressUpdate(res){
+									
+									// #ifdef H5
+									uni.showLoading({
+										title: ('发送中...' + res.progress + '%'),
+									});
+									// #endif
+									
+									// #ifdef APP-PLUS
+									wgtWaiting.setTitle('发送中...' + res.progress + '%');
+									// #endif
+									
+								},
 							});
 							break;
 						/** 红包消息 */
@@ -892,7 +917,15 @@
 						},
 						success_action: true,
 						success(res) {
+							
+							// #ifdef H5
 							uni.hideLoading();
+							// #endif
+							
+							// #ifdef APP-PLUS
+							wgtWaiting.close();
+							// #endif
+							
 							switch (res.err){
 								case 0:
 									if(type == 1){
@@ -1024,15 +1057,98 @@
 			},
 			// 播放语音
 			playVoice(msg){
-				this.AUDIO.stop();
-				if(this.playMsgid == msg.id){
-					this.playMsgid = null;
-				}else{
-					this.playMsgid = msg.id;
-					this.AUDIO.obeyMuteSwitch = false;
-					this.AUDIO.src = (this.staticPath + msg.content.url + '?_=' + Math.random());
-					this.$nextTick(function() {
-						this.AUDIO.play();
+				let _this = this;
+				_this.AUDIO.stop();
+				if(_this.playMsgid == msg.id){
+					_this.playMsgid = null;
+					return;
+				}
+				/** 这里下载语音文件并保存在本地 */
+				let voice_data = _data.localData('voice_data');
+				if(!voice_data){
+					voice_data = {};
+				}
+				if(!(_this.list_id in voice_data)){
+					voice_data[_this.list_id] = {};
+				}
+				_this.playMsgid = msg.id;
+				
+				/** 这里把语音文件保存到本地播放 */
+				if(!(msg.id in voice_data[_this.list_id])){
+					
+					// #ifdef H5
+					uni.showLoading({
+						title: '加载中...',
+					});
+					// #endif
+					
+					// #ifdef APP-PLUS
+					let wgtWaiting = plus.nativeUI.showWaiting("加载中...");
+					// #endif
+					
+					let downloadTask = uni.downloadFile({
+						url: (_this.staticPath + msg.content.url),
+						success: (res) => {
+							
+							// #ifdef H5
+							uni.hideLoading();
+							// #endif
+							
+							// #ifdef APP-PLUS
+							wgtWaiting.close();
+							// #endif
+							
+							if (res.statusCode === 200) {
+								
+								// #ifdef H5
+									_this.AUDIO.src = res.tempFilePath;
+									_this.$nextTick(function() {
+										_this.AUDIO.play();
+									});
+									voice_data[_this.list_id][msg.id] = res.tempFilePath;
+									_data.localData('voice_data',voice_data);
+								// #endif
+								
+								/** 这里如果是APP端就把语音文件缓存到本地 */
+								// #ifdef APP-PLUS
+									uni.saveFile({
+										tempFilePath: res.tempFilePath,
+										success(res){
+											_this.AUDIO.src = res.savedFilePath;
+											_this.$nextTick(function() {
+												_this.AUDIO.play();
+											});
+											voice_data[_this.list_id][msg.id] = res.savedFilePath;
+											_data.localData('voice_data',voice_data);
+										},
+									});
+								// #endif
+							}
+							else{
+								uni.showToast({
+									title: 'loadding voice file error',
+								})
+							}
+						}
+					});
+					downloadTask.onProgressUpdate((res) => {
+						
+						// #ifdef APP-PLUS
+						wgtWaiting.setTitle('加载中...' + res.progress + '%');
+						// #endif
+						
+						// #ifdef H5
+						uni.showLoading({
+							title: '加载中...' + res.progress + '%',
+						});
+						// #endif
+						
+					});
+				}
+				else {
+					_this.AUDIO.src = voice_data[_this.list_id][msg.id];				
+					_this.$nextTick(function() {
+						_this.AUDIO.play();
 					});
 				}
 			},
@@ -1108,7 +1224,8 @@
 						msg.length = min+':'+sec;
 						this.sendMsg(msg,1);
 					}
-				}else{
+				}
+				else{
 					console.log('取消发送录音');
 				}
 				this.willStop = false;
@@ -1134,17 +1251,15 @@
 </script>
 
 <style lang="scss">
+	
 	@import "@/static/css/chat/style.scss";
 	.tool_text {
 		margin-top: 120upx;
 		font-size: 20upx;
-		
-		  margin-left: 0upx;
-		 position: absolute;
-	
-		
-	
+		margin-left: 0upx;
+		position: absolute;
 		top: 0;
 		color: #353535;
 	}
+	
 </style>

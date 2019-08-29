@@ -103,7 +103,26 @@ class Friendlist extends Controller
     }
 
     public function membermaillist(){
-        
+        $user_id = (int)Request::param('user_id');
+        $key = Request::param();
+      
+              
+        $where[] =  ['user_id','=',$user_id];
+        $friendArr =  Friend::where($where)->paginate(PAGE_RECORDS);
+                      
+        $list = array();
+         
+        foreach($friendArr as $key => $val){
+            $user = User::getUserByUserId($val->user_id);
+            $friend = User::getUserByUserId($val->friend_id);
+            $val->nickname = $user->nickname ;
+            $val->friend_nickname = $friend->nickname ;
+            array_push($list,$val);
+        }
+        $this->assign('friendlist',  $friendArr);
+        $this->assign('list',  $list);
+        $this->assign('key',$key);
+        return $this->fetch();
     }
 
 }

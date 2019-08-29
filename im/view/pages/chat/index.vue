@@ -191,7 +191,26 @@
 							path: '/im/chat/deleteChat',
 							data: { list_id, },
 							success: (data) => {
-								_get.getChatList();
+								/** 更新列表数据 */
+								let local_chat_list = _data.localData('chat_list');
+								local_chat_list.splice(_this.list_index,1);
+								_this.list = local_chat_list;
+								_data.localData('chat_list');
+								
+								/** 删除这条会话保存的语音文件 */
+								let local_voice_data = _data.localData('voice_data');
+								if(list_id in local_voice_data){
+									/** app端清除本地语音文件 */
+									// #ifdef APP-PLUS
+										for (let local_path of local_voice_data[list_id]) {
+											uni.removeSavedFile({
+												filePath: local_path,
+											});
+										}
+									// #endif
+									local_voice_data[list_id] = {};
+									_data.localData('voice_data',local_voice_data);
+								}
 							}
 						});
 						break;

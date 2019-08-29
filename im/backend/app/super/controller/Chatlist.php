@@ -89,7 +89,7 @@ class Chatlist extends Controller
         $user_id = (int)Request::param('user_id');
         $key = Request::param();
         $where[] =  ['user_id','=',$user_id];
-        $chatArr =  Chat::where('user_id','=', $user_id)->order('time', 'desc')->paginate(PAGE_RECORDS);
+        $chatArr =  Chat::where($where)->order('time', 'desc')->paginate(PAGE_RECORDS);
         $list = array();
         foreach($chatArr as $key => $val){
            // $user = User::getUserByUserId($val->user_id);

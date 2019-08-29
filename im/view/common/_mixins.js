@@ -96,6 +96,7 @@ export default {
 		 *	}
 		 */
 		$socketSend(send_data){
+			let _this = this;
 			/** callback1是连接,callback2是发送 */
 			((callback1,callback2) => {
 				if(send_data && _data.data('socket_state')){
@@ -182,11 +183,12 @@ export default {
 				});
 				
 				uni.onSocketClose((err) => {
-					//_data.data('socket_state',0);
+					_data.data('socket_state',0);
 				});
 				
 				uni.onSocketError((err) => {
-					//_data.data('socket_state',0);
+					_data.data('socket_state',0);
+					_this.$socketSend();
 					return;
 					uni.showModal({
 						content: JSON.stringify(err) + '---webSocket 连接打开失败!',
@@ -324,7 +326,7 @@ export default {
 				uploadTask.onProgressUpdate((res) => {
 					
 					if('onProgressUpdate' in config){
-						config.onProgressUpdate();
+						config.onProgressUpdate(res);
 					}
 					
 					return;

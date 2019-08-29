@@ -130,6 +130,7 @@
 				showLoadMore: false,
 				is_more: false,
 				no_reader_msg: 0,
+				like_status: false,
 			}
 		},
 		computed:{
@@ -308,12 +309,14 @@
 				});
 			},
 			like(index) {
-				let _this = this,
-				is_like = (_this.posts[index].islike ? 0 : 1);
+				let _this = this;
+				if(this.like_status){
+					return;
+				}
+				this.like_status = true;
 				_this.$httpSend({
 					path: '/im/circle/likeAction',
 					data: {
-						is_like: is_like,
 						id: _this.posts[index].post_id,
 					},
 					success(data) {
@@ -323,16 +326,18 @@
 								"uid": _this.my_data.id,
 								"username": _this.my_data.nickname,
 							});
-						} else {
+						} 
+						else {
 							let likes = [];
 							for(let i = 0,j = _this.posts[index].like.length;i < j; i ++){
 								if(_this.posts[index].like[i].uid == _this.my_data.id){
 									_this.posts[index].like.splice(i, 1);
+									_data.data('circle_data',_this.posts);
 									break;
 								}
 							}
-							
 						}
+						_this.like_status = false;
 					}
 				});
 			},
